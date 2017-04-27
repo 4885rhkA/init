@@ -75,10 +75,14 @@ int main()
         count++;
     }
     
-    player.position = getPosition('@');
+    player.position        = getPosition('@');
     Position stairPosition = getPosition('%');
 
-    printf("position %d %d\n", stairPosition.x, stairPosition.y);
+    int result = abs((player.position.x - stairPosition.x)) + abs(player.position.y - stairPosition.y);
+    if(player.life > result)
+    {
+        printf("%d\n", result);
+    }
 
     return 0;
 }

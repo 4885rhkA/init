@@ -22,6 +22,7 @@ typedef struct
     int life;
     int money;
     int amulet;
+    Position position;
 } Status;
 
 Status maxStatus;
@@ -58,63 +59,54 @@ int getDistance(Item itemA, Item itemB)
     return abs(itemA.position.x - itemB.position.x) + abs(itemA.position.y - itemB.position.y);
 }
 
+void evaluation(Status status)
+{
+    // ゴールできないのなら動かない
+    // ゴールできるのなら
+}
+
+void getItem(Status* status, int item)
+{
+    switch(item)
+    {
+        case 10:
+            status->life += 5;
+            break;
+        case 11:
+            status->amulet = 1;
+            break;
+        default:
+            status->money += item;
+            break;
+    }
+}
+
 /* 動的計画法による解き方 */
 void solve(Item* items, int from, int to, int itemLength, Status status)
 {
-    /* ゴールしたら評価開始 */
-    if(to > itemLength)
+    if(to >= itemLength)
     {
-        /* 評価 */
-        if(status.amulet >= maxStatus.amulet && status.money >= maxStatus.money)
-        {
-            maxStatus = status;
-        }
+        evaluation(status);
     }
-    /* items個分探索していないがライフが０になった場合 */
-    else if(status.life < 0)
-    {
-        /* 評価 */
-        if(status.amulet >= maxStatus.amulet && status.money >= maxStatus.money)
-        {
-            maxStatus = status;
-        }
-    }
-    /* items個分探索していないし、ライフも０でない場合 */
     else
     {
-        /* from to を書かれたとおりに実行しないか */
-        solve(items, from, to+1, itemLength, status);
-
-        /* from to を書かれたとおりに実行するか */
+        solve(items, from, to + 1, itemLength, status);
+        
         status.life -= getDistance(items[from], items[to]);
-
-        if(status.life > 0)
+        if(items[to].item != 0 && items[to].item != 12)
         {
-            /* 移動した場合に特典 */
-            switch(items[to].item)
-            {
-                case 0:             
-                case 12:            
-                    break;
-                case 10:            
-                    status.life  += 5;
-                    break;;
-                case 11:            
-                    status.amulet = 1;
-                    break;
-                default:            
-                    status.money += items[to].item;
-                    break;
-            }
+            getItem(&status, items[to].item);
         }
-        solve(items, to, to+1, itemLength, status);
+        status.position = items[to].position;
+        solve(items, to, to + 1, itemLength, status);
     }
 }
 
 int main()
 {
     Status status;
-    status.life   = 0;
+    status.position.x = status.position.y = maxStatus.position.x = maxStatus.position.y = 0;
+    status.life   = maxStatus.life   = 0;
     status.money  = maxStatus.money  = 0;
     status.amulet = maxStatus.amulet = 0;
 

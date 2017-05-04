@@ -3,6 +3,7 @@
 #include <string.h>
 #include <malloc/malloc.h>
 
+#define QUESTION 10
 #define ITEMMAXLENGTH 100
 
 typedef struct
@@ -20,6 +21,7 @@ typedef struct
 typedef struct
 {
     int life;
+    int goal;
     int money;
     int amulet;
     Position position;
@@ -31,7 +33,7 @@ int getItemNumber(char symbol)
 {
     switch(symbol)
     {
-        case '*':
+        case '.':
             return -1;
         case '@':
             return 0;
@@ -61,8 +63,13 @@ int getDistance(Item itemA, Item itemB)
 
 void evaluation(Status status)
 {
-    // ゴールできないのなら動かない
-    // ゴールできるのなら
+    if(status.goal == 1)
+    {
+        if(status.amulet >= maxStatus.amulet && status.money >= maxStatus.money)
+        {
+                maxStatus = status;
+        }
+    }
 }
 
 void getItem(Status* status, int item)
@@ -81,98 +88,123 @@ void getItem(Status* status, int item)
     }
 }
 
-/* 動的計画法による解き方 */
-void solve(Item* items, int from, int to, int itemLength, Status status)
+/* 探索 */
+void solve(Item* items, int from, int to, int go, int itemLength, Status status)
 {
     if(to >= itemLength)
     {
-        evaluation(status);
+        if(status.position.x == items[itemLength - 1].position.x && status.position.y == items[itemLength - 1].position.y)
+        {
+            status.goal = 1;
+            evaluation(status);
+        }
+        return;
     }
-    else
-    {
-        solve(items, from, to + 1, itemLength, status);
-        
+    else if(go == 1)
+    {        
         status.life -= getDistance(items[from], items[to]);
         if(items[to].item != 0 && items[to].item != 12)
         {
             getItem(&status, items[to].item);
         }
         status.position = items[to].position;
-        solve(items, to, to + 1, itemLength, status);
+    }
+
+    if(status.life >= 0)
+    {
+        solve(items, to, to + 1, 0, itemLength, status);
+        solve(items, to, to + 1, 1, itemLength, status);
     }
 }
 
 int main()
 {
-    Status status;
-    status.position.x = status.position.y = maxStatus.position.x = maxStatus.position.y = 0;
-    status.life   = maxStatus.life   = 0;
-    status.money  = maxStatus.money  = 0;
-    status.amulet = maxStatus.amulet = 0;
-
-    /* データ読み込み */
-    /* ファイル開く */
-    FILE *fp;
-    char filename[] = "input0.txt";
-    if ((fp = fopen(filename, "r")) == NULL) {
-        fprintf(stderr, "%sのオープンに失敗しました.\n", filename);
-        exit(EXIT_FAILURE);
-    }
-
-    /* itemを追加 */
-    int   column     = 0;
-    int   row        = 0;
-    Item* items      = (Item*)malloc(sizeof(Item) * ITEMMAXLENGTH);
-    int   itemLength = 0;
-    char  life[3];   /* ライフは３桁まで対応 */
-    char  mapResult;
-    while ((mapResult = fgetc(fp)) != EOF) {
-        if (mapResult == '\n') {
-            row++;
-            column = 0;
-        }
-        else if(mapResult != '\0')
-        {
-            if(row == 0)
-            {
-                life[column] = mapResult;
-                column++;
-            }
-            else
-            {
-                if(getItemNumber(mapResult) > -1)
-                {
-                    items[itemLength].position.x = column;
-                    items[itemLength].position.y = row-1;
-                    items[itemLength].item       = getItemNumber(mapResult);
-                    itemLength++;
-                }
-                column++;
-            }
-        }
-    }
-
-    status.life = atoi(life);
-
-    /* ファイルのクローズ */
-    fclose(fp);
-
-    /* アイテムの並び替え */
-    for (int i = 0; i < itemLength; i++)
+    for(int now = 0; now < QUESTION; now++)
     {
-        if(items[i].item == 0)
-        {
-            swap(&items[0], &items[i]);
-        }
-        if(items[i].item == 12)
-        {
-            swap(&items[itemLength - 1], &items[i]);
-        }
-    }
+        Status status;
+        status.position.x = status.position.y = maxStatus.position.x = maxStatus.position.y = 0;
+        status.life       = maxStatus.life    = 0;
+        status.goal       = maxStatus.goal    = 0;
+        status.money      = maxStatus.money   = 0;
+        status.amulet     = maxStatus.amulet  = 0;
 
-    /* 最適解を求める */
-    solve(items, 0, 1, itemLength, status);
-    printf("Ans:%d %d\n", maxStatus.amulet, maxStatus.money);
+        /* データ読み込み */
+        /* ファイル開く */
+        FILE *fp;
+        char *filename = (char*)malloc(sizeof(128));
+        sprintf(filename, "input%d.txt", now);
+        if ((fp = fopen(filename, "r")) == NULL) {
+            fprintf(stderr, "%sのオープンに失敗しました.\n", filename);
+            exit(EXIT_FAILURE);
+        }
+
+        /* itemを追加 */
+        int   column     = 0;
+        int   row        = 0;
+        Item* items      = (Item*)malloc(sizeof(Item) * ITEMMAXLENGTH);
+        int   itemLength = 0;
+        char* life       = (char*)malloc(4);   /* ライフは３桁まで対応 */
+        char  mapResult;
+        while ((mapResult = fgetc(fp)) != EOF) {
+            if (mapResult == '\n') {
+                row++;
+                column = 0;
+            }
+            else if(mapResult != '\0')
+            {
+                if(row == 0)
+                {
+                    life[column] = mapResult;
+                    column++;
+                }
+                else
+                {
+                    if(getItemNumber(mapResult) > -1)
+                    {
+                        items[itemLength].position.x = column;
+                        items[itemLength].position.y = row-1;
+                        items[itemLength].item       = getItemNumber(mapResult);
+                        itemLength++;
+                    }
+                    column++;
+                }
+            }
+        }
+
+        status.life = atoi(life);
+        printf("%d\n", status.life);
+
+        /* ファイルのクローズ */
+        fclose(fp);
+
+        /* アイテムの並び替え */
+        for (int i = 0; i < itemLength; i++)
+        {
+            if(items[i].item == 0)
+            {
+                swap(&items[0], &items[i]);
+            }
+            if(items[i].item == 12)
+            {
+                swap(&items[itemLength - 1], &items[i]);
+            }
+        }
+
+        maxStatus.position = items[0].position;
+
+        /* 最適解を求める */
+        solve(items, 0, 1, 0, itemLength, status);
+        solve(items, 0, 1, 1, itemLength, status);
+        printf("Ans:%d %d %d %d\n", maxStatus.position.x, maxStatus.position.y, maxStatus.amulet, maxStatus.money);
+
+        /* 後処理 */
+        free(filename);
+        free(life);
+        free(items);
+        filename = NULL;
+        life     = NULL;
+        items    = NULL;
+    }
 
     return 0;
 }

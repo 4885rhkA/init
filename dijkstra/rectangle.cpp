@@ -1,22 +1,36 @@
+/**
+ *
+ * @file   main.cpp
+ * @brief  ２つの入力された長方形に関するデータから、重なっている長方形に関する情報を表示する
+ * @author 
+ * @date 
+ */
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
-/* 中心座標 */
+/**
+ * 2次元座標
+ */
 typedef struct
 {
     float x;
     float y;
 } Position;
 
-/* 長方形の長さ */
+/**
+ * 長方形の辺の長さ
+ */
 typedef struct
 {
     float width;
     float height;
 } Length;
 
-/* 長方形 */
+/**
+ * 長方形
+ */
 typedef struct
 {
     Position center;
@@ -24,12 +38,18 @@ typedef struct
     Position leftBottom;
 } Rectangle;
 
-/* 頂点が重なっているか判定;重なっていたらいくつ重なっているか返す */
-int cross(Rectangle a, Rectangle b)
+/**
+ * @fn
+ * @brief         ２つの長方形が交わっているか否かを判定
+ * @param  base   比較するベース
+ * @param  target 比較対象
+ * @return        0: 交差なし / 1:交差あり
+ */
+ int cross(Rectangle base, Rectangle target)
 {
-    if(fabs(a.center.x - b.center.x) < (a.length.width + b.length.width)/2)
+    if(fabs(base.center.x - target.center.x) < (base.length.width + target.length.width)/2)
     {
-        if(fabs(a.center.y - b.center.y) < (a.length.height + b.length.height)/2)
+        if(fabs(base.center.y - target.center.y) < (base.length.height + target.length.height)/2)
         {
             return 1;
         }
@@ -37,7 +57,13 @@ int cross(Rectangle a, Rectangle b)
     return 0;
 }
 
-Length getCrossedRectangleLength(Rectangle* rectangles)
+/**
+ * @fn
+ * @brief             重なっている長方形に対するRectangleを取得
+ * @param  rectangles 2つの入力された長方形のRectangleを含んだ配列のポインタ
+ * @return            重なっている長方形に対するRectangle
+ */
+Rectangle getCrossedRectangle(Rectangle* rectangles)
 {
     float sx = 0.0f;
     float sy = 0.0f;
@@ -46,8 +72,6 @@ Length getCrossedRectangleLength(Rectangle* rectangles)
     
     for(int i = 0; i < 2; i++)
     {
-        rectangles[i].leftBottom.x = rectangles[i].center.x - rectangles[i].length.width/2;
-        rectangles[i].leftBottom.y = rectangles[i].center.y - rectangles[i].length.height/2;
         if(i == 0)
         {
             sx = rectangles[i].leftBottom.x;
@@ -63,26 +87,62 @@ Length getCrossedRectangleLength(Rectangle* rectangles)
         }
     }
     
-    Length len;
-    len.width  = ex - sx;
-    len.height = ey - sy;
-
-    return len;
+    Rectangle rec;
+    rec.center.x      = sx + (ex - sx) / 2;
+    rec.center.y      = sy + (ey - sy) / 2;
+    rec.length.width  = ex - sx;
+    rec.length.height = ey - sy;
+    rec.leftBottom.x  = sx;
+    rec.leftBottom.y  = sy;
+    
+    return rec;
 }
 
-/* メイン関数 */
+/**
+ * @fn
+ * @brief    メイン関数
+ * @return 0
+ */
 int main()
 {
-    Rectangle rectangles[2] =  {
-        {{30.0f, 30.0f}, {10.0f, 20.0f}, {0.0f, 0.0f}},
-        {{30.0f, 30.0f}, {20.0f, 10.0f}, {0.0f, 0.0f}}
-    };
+    float centerPositionX = 0;
+    float centerPositionY = 0;
+    float width           = 0;
+    float height = 0;
+
+    Rectangle rectangles[2];
+
+    for(int i = 0; i < 2; i++)
+    {
+        printf("%dつめの長方形について\n", i + 1);
+        printf("長方形の中心X座標は？\n");
+        scanf("%f", &centerPositionX);
+        printf("長方形の中心Y座標は？\n");
+        scanf("%f", &centerPositionY);
+        printf("縦の長さは？\n");
+        scanf("%f", &width);
+        printf("横の長さは？\n");
+        scanf("%f", &height);
+        printf("\n");
+
+        rectangles[i].center.x      = centerPositionX;
+        rectangles[i].center.y      = centerPositionY;
+        rectangles[i].length.width  = width;
+        rectangles[i].length.height = height;
+        rectangles[i].leftBottom.x  = rectangles[i].center.x - rectangles[i].length.width/2;
+        rectangles[i].leftBottom.y  = rectangles[i].center.y - rectangles[i].length.height/2;
+    }
     
     if(cross(rectangles[0], rectangles[1]))
     {
-        printf("crossed!\n");
-        Length len = getCrossedRectangleLength(rectangles);
+        printf("Crossed!\n");
+        Rectangle rec = getCrossedRectangle(rectangles);
+        printf("width: %.2f height: %.2f\n", rec.length.width, rec.length.height);
     }
-    
+    else
+    {
+        printf("Not crossed!\n");
+    }
+
     return 0;
-}s
+}

@@ -1,3 +1,10 @@
+/**
+ *
+ * @file   hard.cpp
+ * @brief  迷路及びライフから算出される、最適な道を通った場合に関する結果を表示する
+ * @author 
+ * @date 
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,29 +13,45 @@
 #define QUESTION 10
 #define ITEMMAXLENGTH 100
 
+/**
+ * 2次元座標
+ */
 typedef struct
 {
     int x;
     int y;
 } Position;
 
+/**
+ * アイテム
+ */
 typedef struct
 {
     Position position;
-    int      item;       /* -1;地面 0;プレイヤー 1-9;財宝 10;食べ物  11;魔除け  12;ゴール  */
+    /* -1;地面 0;プレイヤー 1-9;財宝 10;食べ物  11;魔除け  12;ゴール  */
+    int      item;
 } Item;
 
+/**
+ * ステータス
+ */
 typedef struct
 {
-    int life;
-    int goal;
-    int money;
-    int amulet;
+    int      life;
+    int      goal;
+    int      money;
+    int      amulet;
     Position position;
 } Status;
 
 Status maxStatus;
 
+/**
+ * @fn
+ * @brief         アイテム番号を取得
+ * @param  symbol char時の文字
+ * @return        各symbolについて定めた番号
+ */
 int getItemNumber(char symbol)
 {
     switch(symbol)
@@ -48,19 +71,37 @@ int getItemNumber(char symbol)
     }
 }
 
-void swap(Item* itemA, Item* itemB)
+/**
+ * @fn
+ * @brief         アイテムを入れ替える
+ * @param  base   交換するベースアイテム
+ * @param  target 交換対象
+ */
+void swap(Item* base, Item* target)
 {
     Item temp;
-    temp   = *itemA;
-    *itemA = *itemB;
-    *itemB = temp;
+    temp    = *base;
+    *base   = *target;
+    *target = temp;
 }
 
-int getDistance(Item itemA, Item itemB)
+/**
+ * @fn
+ * @brief         baseとtarget間の距離を取得
+ * @param  base   距離を測るベースとなるアイテム
+ * @param  target 対象となるアイテム
+ * @return        距離
+ */
+int getDistance(Item base, Item target)
 {
-    return abs(itemA.position.x - itemB.position.x) + abs(itemA.position.y - itemB.position.y);
+    return abs(base.position.x - target.position.x) + abs(base.position.y - target.position.y);
 }
 
+/**
+ * @fn
+ * @brief         最適な道を通ったのか評価
+ * @param  status ある道を通ってきた際の評価
+ */
 void evaluation(Status status)
 {
     if(status.goal == 1)
@@ -72,6 +113,12 @@ void evaluation(Status status)
     }
 }
 
+/**
+ * @fn
+ * @brief         アイテムを取得した際に発生する評価変更
+ * @param  status ある道を通ってきた際の評価
+ * @param  item   入手したアイテム
+ */
 void getItem(Status* status, int item)
 {
     switch(item)
@@ -88,7 +135,16 @@ void getItem(Status* status, int item)
     }
 }
 
-/* 探索 */
+/**
+ * @fn
+ * @brief             問題を解く関数
+ * @param  items      各問題において登場したアイテム
+ * @param  from       配列items内何番目のものかを使うか示すための数値
+ * @param  to         配列items内何番目のものかを使うか示すための数値
+ * @param  go         0: 再帰なし 1:再帰あり
+ * @param  itemLength 配列itemsの要素数
+ * @param  status     ステータス
+ */
 void solve(Item* items, int from, int to, int go, int itemLength, Status status)
 {
     if(to >= itemLength)
@@ -117,6 +173,11 @@ void solve(Item* items, int from, int to, int go, int itemLength, Status status)
     }
 }
 
+/**
+ * @fn
+ * @brief    メイン関数
+ * @return 0
+ */
 int main()
 {
     for(int now = 0; now < QUESTION; now++)
